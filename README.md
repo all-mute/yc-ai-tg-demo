@@ -1,4 +1,4 @@
-# ТГ бот для использования сервисов Yandex Cloud
+# Телеграм-бот для демонстрации сервисов Yandex Cloud AI Studio
 * [Search API Generative answer](https://yandex.cloud/ru/services/search-api)
 * [AI Assistants](https://yandex.cloud/ru/events/979)
 
