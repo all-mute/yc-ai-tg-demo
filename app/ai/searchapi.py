@@ -25,6 +25,7 @@ def process_response(response):
     content = ""
     sources = []
 
+    # Проверяем тип контента в ответе
     if "application/json" in response.headers.get("Content-Type", ""):
         content = response.json().get("message", {}).get("content", "")
         sources = response.json().get("links", [])
@@ -36,14 +37,17 @@ def process_response(response):
     else:
         logger.error(f"Неожиданный тип контента: {response.text}")
 
+    # Формируем комбинированный контент для ответа
     combined_content = f"Ответ SearchAPI:\n{content}\n\nИсточники:\n" + "\n".join(sources)
     return combined_content
 
 async def search_api_generative_contextual(message: str, thread_id: str):
     """Выполняет генеративный поиск с учетом контекста треда."""
+    # Получаем сообщения из треда
     thread_messages = sdk.threads.get(thread_id).read()
     messages = [{"content": item.parts[0], "role": item.role} for item in thread_messages]
     
+    # Добавляем новое сообщение от пользователя
     messages.append({"content": message, "role": "user"})
     
     headers = {"Authorization": f"Api-Key {API_KEY}"}
@@ -54,9 +58,11 @@ async def search_api_generative_contextual(message: str, thread_id: str):
         "url": SERP_URL
     }
 
+    # Отправляем запрос к API
     response = requests.post(SEARCH_API_GENERATIVE, headers=headers, json=data)
     combined_content = process_response(response)
     
+    # Записываем сообщения в тред
     thread = sdk.threads.get(thread_id)
     thread.write(message)
     thread.write(combined_content, labels={"role": "assistant"})
@@ -72,6 +78,7 @@ async def search_api_generative(message: str):
         "url": SERP_URL
     }
 
+    # Отправляем запрос к API
     response = requests.post(SEARCH_API_GENERATIVE, headers=headers, json=data)
     combined_content = process_response(response)
     

@@ -1,11 +1,14 @@
-# ТГ бот для использования сервисов Yandex Cloud:
+# ТГ бот для использования сервисов Yandex Cloud
 * [Search API Generative answer](https://yandex.cloud/ru/services/search-api)
 * [AI Assistants](https://yandex.cloud/ru/events/979)
 
 ## Описание
 Этот проект представляет собой Telegram-бота, который позволяет использовать сервисы Yandex Cloud:
 * **Search API Generative answer** - сервис получения ответов на вопросы по документам, размещенным в интернете
-* **AI Assistants** - сервис для создания и использования AI-ассистентов с возможностью получения ответов на вопросы по внутренним приматным документам
+![alt text](<Screenshot 2024-11-19 at 01.27.49.png>)
+
+* **AI Assistants** - сервис для создания и использования AI-ассистентов с возможностью получения ответов на вопросы по внутренним приматным документам (На скрине для примера используется книга "Республика" Платона)
+![alt text](<Screenshot 2024-11-19 at 01.18.35.png>)
 
 через интерфейс телеграм-бота. Требуется предвартельная настройка.
 
@@ -85,4 +88,8 @@
    ```bash
    docker-compose up -d --build
    ```
+
+## Лицензия MIT
+Авторы [merkulov.ai](https://merkulov.ai), [drybalko](https://github.com/DRybalko), Sergei Zolotov
+
 
