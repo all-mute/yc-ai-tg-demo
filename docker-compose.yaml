@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  tgbot_ycai:
+    build: .
+    ports:
+      - "5066:5000"
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
