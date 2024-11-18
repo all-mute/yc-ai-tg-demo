@@ -1,128 +1,69 @@
 from loguru import logger
 import sqlite3
-import json
+from typing import List, Optional
 
 logger.warning("Используется sqlitedb!")
 
 DB_PATH = 'data/tgbot.db'
 
 def dict_factory(cursor, row):
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
+    """Создает словарь из строки результата запроса."""
+    return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
 
-def get_connection():
+def get_connection() -> sqlite3.Connection:
+    """Устанавливает соединение с базой данных SQLite."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = dict_factory
     return conn
 
-def init_commands_and_snippets() -> tuple[dict, dict]:
-    logger.debug("Получение полного списка сниппетов из SQLite")
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT * FROM tgbot_snippets')
-    items = cursor.fetchall()
-    
-    commands = {item['name']: item['snippet_text'] for item in items if item['is_command']}
-    snippets = {item['name']: item['snippet_text'] for item in items if not item['is_command']}
-    
-    conn.close()
-    logger.debug(f"Команды и сниппеты инициализированы: {commands}")
-    return commands, snippets
-
-def get_all_chats() -> list[str]:
+def get_all_chats() -> List[str]:
+    """Получает все chat_id из базы данных."""
     logger.debug("Получение всех чатов из SQLite")
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT group_id FROM tgbot_chats')
-    chat_ids = [item['group_id'] for item in cursor.fetchall()]
-    
-    conn.close()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT chat_id FROM tgbot_chats')
+        chat_ids = [item['chat_id'] for item in cursor.fetchall()]
     logger.debug(f"Полученные ID чатов: {chat_ids}")
     return chat_ids
 
 def chat_exists(chat_id: str) -> bool:
+    """Проверяет существование чата по chat_id."""
     logger.debug(f"Проверка существования чата с ID: {chat_id}")
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT 1 FROM tgbot_chats WHERE group_id = ?', (chat_id,))
-    exists = cursor.fetchone() is not None
-    
-    conn.close()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT 1 FROM tgbot_chats WHERE chat_id = ?', (chat_id,))
+        exists = cursor.fetchone() is not None
     return exists
 
-def create_group_chat_id(chat_id: str):
-    if chat_exists(chat_id):
-        logger.warning(f"Чат с ID {chat_id} уже существует")
-        return False
-        
-    logger.debug(f"Создание группы чата с ID: {chat_id}")
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('INSERT INTO tgbot_chats (group_id) VALUES (?)', (chat_id,))
-    
-    conn.commit()
-    conn.close()
-    return True
+def get_thread_id(chat_id: str) -> Optional[str]:
+    """Получает thread_id для указанного chat_id."""
+    logger.debug(f"Получение thread_id для чата с ID: {chat_id}")
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT thread_id FROM tgbot_chats WHERE chat_id = ?', (chat_id,))
+        result = cursor.fetchone()
+    return result['thread_id'] if result else None
 
-def remove_group_chat_id(chat_id: str):
-    logger.debug(f"Удаление группы чата с ID: {chat_id}")
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('DELETE FROM tgbot_chats WHERE group_id = ?', (chat_id,))
-    
-    conn.commit()
-    conn.close()
+def set_thread_id(chat_id: str, thread_id: str):
+    """Устанавливает thread_id для указанного chat_id."""
+    logger.debug(f"Установка thread_id для чата с ID: {chat_id}")
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('UPDATE tgbot_chats SET thread_id = ? WHERE chat_id = ?', (thread_id, chat_id))
 
-def create_log(chat_id: str, logs: dict):
+def create_chat_and_thread(chat_id: str, thread_id: str):
+    """Создает новый чат с указанным chat_id и thread_id."""
+    logger.debug(f"Создание чата и thread_id для чата с ID: {chat_id}")
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO tgbot_chats (chat_id, thread_id) VALUES (?, ?)', (chat_id, thread_id))
+
+def create_log(chat_id: str, user_nickname: str, message_text: str, message_time: str):
+    """Создает лог для указанного чата."""
     logger.debug(f"Создание лога для чата с ID: {chat_id}")
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute(
-        'INSERT INTO tgbot_logs (group_id, logs) VALUES (?, ?)',
-        (chat_id, json.dumps(logs))
-    )
-    
-    conn.commit()
-    conn.close()
-
-def get_snippet_by_name(name: str) -> str:
-    logger.debug(f"Получение сниппета с названием: {name}")
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT snippet_text FROM tgbot_snippets WHERE name = ?', (name,))
-    result = cursor.fetchone()
-    
-    conn.close()
-    return result['snippet_text'] if result else "Сниппет не найден"
-
-def create_sniffer_log(
-    chat_id: str,
-    chat_title: str,
-    chat_username: str,
-    user_id: str,
-    user_nickname: str,
-    message_id: str,
-    date: str,
-    chat_type: str,
-    message_text: str
-):
-    logger.debug(f"Создание снифер-лога для чата с ID: {chat_id}")
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute(
-        'INSERT INTO tgbot_sniffer_logs (chat_id, chat_title, chat_username, user_id, user_nickname, message_id, date, chat_type, message_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        (chat_id, chat_title, chat_username, user_id, user_nickname, message_id, date, chat_type, message_text)
-    )
-    
-    conn.commit()
-    conn.close()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT INTO tgbot_logs (chat_id, user_nickname, message_text, message_time) VALUES (?, ?, ?, ?)',
+            (chat_id, user_nickname, message_text, message_time)
+        )

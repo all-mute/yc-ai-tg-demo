@@ -6,54 +6,54 @@ from loguru import logger
 from app.bot import bot_init
 from app.db_wrappers.init_sqlite_db import init_sqlite_db
 
-# Configure logging
+# Настройка логирования
 logger.add("logs/app.log", rotation="5 MB", retention="100 days", level="DEBUG")
 
-# Create an event to signal when to stop the bot
+# Создание события для сигнализации о завершении работы бота
 stop_event = asyncio.Event()
 
 async def bot_runner():
+    """Основная функция для запуска бота."""
     try:
-        # Initialize database before starting the bot
-        logger.info("Initializing database...")
+        logger.info("Инициализация базы данных...")
         init_sqlite_db()
         
-        # Initialize bot and application
+        # Инициализация бота и приложения
         application: Application = await bot_init()
 
-        # Set up signal handlers
+        # Настройка обработчиков сигналов
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
             loop.add_signal_handler(sig, lambda: asyncio.create_task(shutdown(application)))
 
-        # Start the bot
+        # Запуск бота
         await application.initialize()
         await application.start()
         await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
 
-        logger.info("Bot started. Press Ctrl+C to stop.")
+        logger.info("Бот запущен. Нажмите Ctrl+C для остановки.")
 
-        # Wait until the stop event is set
+        # Ожидание сигнала для остановки
         await stop_event.wait()
 
-        # Stop the bot gracefully
+        # Корректная остановка бота
         await application.stop()
         await application.shutdown()
         
     except Exception as e:
-        logger.error(f"Error while starting the bot: {e}")
+        logger.error(f"Ошибка при запуске бота: {e}")
         raise
     finally:
-        logger.info("Bot has finished working")
+        logger.info("Работа бота завершена.")
 
 async def shutdown(application: Application):
-    """Gracefully shut down the application."""
-    logger.info("Received stop signal, shutting down...")
+    """Корректное завершение работы приложения."""
+    logger.info("Получен сигнал остановки, завершение работы...")
     stop_event.set()
     try:
         await asyncio.wait_for(application.stop(), timeout=5.0)
     except asyncio.TimeoutError:
-        logger.warning("Shutdown timed out, forcing exit")
+        logger.warning("Время ожидания завершения истекло, принудительный выход.")
 
 if __name__ == "__main__":
     asyncio.run(bot_runner())

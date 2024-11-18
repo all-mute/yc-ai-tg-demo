@@ -1,10 +1,10 @@
 version: '3.8'
 
 services:
-  tgbot_ycai:
+  tgbot_ycai_public_demo:
     build: .
     ports:
-      - "5066:5000"
+      - "5064:5000"
     restart: unless-stopped
     volumes:
       - ./data:/app/data
