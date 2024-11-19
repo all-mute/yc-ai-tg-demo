@@ -140,6 +140,7 @@ async def safely_get_thread_id(chat_id: str) -> str:
     
     # Если поток не найден, создаем новый
     if not thread_id:
-        await new_thread_handler(chat_id)
+        thread_id = await ai_assistant_new_thread(chat_id)
+        create_chat_and_thread(chat_id, thread_id)
         
     return get_thread_id(chat_id)
