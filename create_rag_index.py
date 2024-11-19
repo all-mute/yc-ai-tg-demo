@@ -6,7 +6,7 @@ from yandex_cloud_ml_sdk import YCloudML
 from yandex_cloud_ml_sdk.search_indexes import VectorSearchIndexType, StaticIndexChunkingStrategy
 
 # Загрузка переменных окружения
-load_dotenv()
+load_dotenv('/home/asuka0/tgbot_ai_serp/yc-ai-tg-demo/.env')
 
 # Получение идентификатора папки и API ключа из переменных окружения
 FOLDER_ID = os.getenv("YC_FOLDER_ID")
@@ -17,7 +17,14 @@ DATA_DIR = os.getenv("DATA_DIR")
 sdk = YCloudML(folder_id=FOLDER_ID, auth=YANDEX_API_KEY)
 
 # Путь к директории с данными
-data_directory = f"knowledge/{DATA_DIR}"
+current_dir = os.path.dirname(os.path.abspath(__file__))
+data_directory = os.path.join(current_dir, "knowledge", DATA_DIR)
+
+# Проверка наличия файлов в директории
+files = os.listdir(data_directory)
+if not files:
+    logger.error(f"Директория {data_directory} пуста")
+    raise FileNotFoundError(f"В директории {data_directory} нет файлов")
 
 # Список для хранения ссылок на загруженные файлы
 uploaded_files = []
