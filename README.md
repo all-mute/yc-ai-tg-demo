@@ -27,7 +27,7 @@
 ## До начала установки
 
 1. Зарегистрируйте бота в [Telegram BotFather](https://t.me/BotFather) и получите токен. (введите команду `/newbot` и следуйте инструкциям)
-2. Зарегистрируйтесь в [Yandex Cloud](https://cloud.yandex.ru/) и создайте сервисный аккаунт с ролями `ai.assistant.editor` и `ai.search-api.user`. [как это сделать?](https://yandex.cloud/ru/docs/iam/concepts/users/service-accounts) [как это сделать (2)?](https://yandex.cloud/ru/docs/search-api/operations/workaround#create-api-key)
+2. Зарегистрируйтесь в [Yandex Cloud](https://cloud.yandex.ru/) и создайте сервисный аккаунт с ролями `ai.assistant.editor` и `search-api.executor`. [как это сделать?](https://yandex.cloud/ru/docs/iam/concepts/users/service-accounts) [как это сделать (2)?](https://yandex.cloud/ru/docs/search-api/operations/workaround#create-api-key)
 2. Получите API ключ и идентификатор папки в Yandex Cloud. [как это сделать?](https://yandex.cloud/ru/docs/foundation-models/quickstart/yandexgpt)
 3. Убедитесь, что у вас установлен Python 3.10 или выше. [как это сделать?](https://www.python.org/downloads/)
 4. (Не обязательно) Убедитесь, что у вас установлен Docker и Docker Compose. [как это сделать (1)?](https://docs.docker.com/get-docker/) [как это сделать (2)?](https://docs.docker.com/compose/install/)
