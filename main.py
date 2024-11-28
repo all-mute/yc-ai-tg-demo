@@ -21,39 +21,38 @@ async def bot_runner():
         # Инициализация бота и приложения
         application: Application = await bot_init()
 
-        # Настройка обработчиков сигналов
-        loop = asyncio.get_running_loop()
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            loop.add_signal_handler(sig, lambda: asyncio.create_task(shutdown(application)))
+        try:
+            # Запуск бота
+            await application.initialize()
+            await application.start()
+            await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
 
-        # Запуск бота
-        await application.initialize()
-        await application.start()
-        await application.updater.start_polling(allowed_updates=Update.ALL_TYPES)
-
-        logger.info("Бот запущен. Нажмите Ctrl+C для остановки.")
-
-        # Ожидание сигнала для остановки
-        await stop_event.wait()
-
-        # Корректная остановка бота
-        await application.stop()
-        await application.shutdown()
-        
+            logger.info("Бот запущен. Нажмите Ctrl+C для остановки.")
+            
+            # Ожидание прерывания
+            await stop_event.wait()
+                
+        except KeyboardInterrupt:
+            logger.info("Получен сигнал остановки (Ctrl+C)")
+        finally:
+            # Корректная остановка бота
+            await application.stop()
+            await application.shutdown()
+            
     except Exception as e:
         logger.error(f"Ошибка при запуске бота: {e}")
         raise
     finally:
         logger.info("Работа бота завершена.")
 
-async def shutdown(application: Application):
-    """Корректное завершение работы приложения."""
-    logger.info("Получен сигнал остановки, завершение работы...")
+def signal_handler(signum, frame):
+    """Обработчик сигналов для всех платформ."""
+    logger.info("Получен сигнал остановки...")
     stop_event.set()
-    try:
-        await asyncio.wait_for(application.stop(), timeout=5.0)
-    except asyncio.TimeoutError:
-        logger.warning("Время ожидания завершения истекло, принудительный выход.")
 
 if __name__ == "__main__":
+    # Установка обработчика сигналов перед запуском
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
     asyncio.run(bot_runner())
